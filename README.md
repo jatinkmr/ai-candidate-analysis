@@ -20,10 +20,15 @@ This project is a FastAPI-based web service that intelligently parses resumes. I
 
 ```
 .
-├── .env                # Environment variables (needs to be created)
-├── main.py             # Main application file with FastAPI logic
+├── .env                # Environment variables (create this file)
+├── main.py             # Main FastAPI application entrypoint
 ├── requirements.txt    # Project dependencies
-└── venv/               # Virtual environment directory
+├── controllers/        # API route handlers
+│   └── controller.py
+├── services/           # Business logic and service layer
+│   ├── geminiAi.py
+│   └── service.py
+└── .venv/              # Virtual environment directory
 ```
 
 ## Getting Started
