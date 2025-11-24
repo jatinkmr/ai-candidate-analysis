@@ -10,7 +10,7 @@ def setup_gemini():
     return genai.GenerativeModel("gemini-2.5-flash")
 
 
-def analyze_text(text: str) -> str:
+async def analyze_resume(text: str) -> str:
     print("Initializing analysis...Waiting for response...")
 
     model = setup_gemini()
