@@ -1,5 +1,5 @@
 import json
-from fastapi import APIRouter, status, Response, UploadFile, File
+from fastapi import APIRouter, status, Response, UploadFile, File, Form
 from services.service import get_welcome_message, upload_and_analysis
 
 router = APIRouter()
@@ -12,9 +12,9 @@ def home():
         media_type="application/json",
     )
 
-@router.post("/upload")
-async def upload_file(file: UploadFile = File(...)):
-    response_data = await upload_and_analysis(file)
+@router.post("/analyze")
+async def upload_file(file: UploadFile = File(...), githubUserName: str = Form(...)):
+    response_data = await upload_and_analysis(file, githubUserName)
     try:
         response_json = json.loads(response_data)
     except json.JSONDecodeError:

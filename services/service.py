@@ -59,7 +59,7 @@ async def scrape_doc(file: UploadFile) -> str:
     return text
 
 
-async def upload_and_analysis(file):
+async def upload_and_analysis(file, githubUserName: str):
     print("Receiving File...")
     validate_file(file)
     if file.filename.lower().endswith(".pdf"):
