@@ -30,45 +30,29 @@ def validate_file(file: UploadFile):
         )
 
 
-def scrape_pdf(file: UploadFile) -> str:
-    reader = PdfReader(file.file,"rb")
-    texts = []
-    for page in reader.pages:
-        page_text = page.extract_text()
-        if page_text:
-            texts.append(page_text.strip())
-    return "\\n\\n".join(texts)
-
-# async def scrape_pdf(file: UploadFile) -> str:
-#     binaryData =  await file.read()
-#     # extracted_content = extract_pdf_text(binary_data)
-#     try:
-#         # Load binary data into buffer
-#         pdf_buffer = BytesIO(binaryData)
-#         reader = PdfReader(pdf_buffer)
-
-#         extracted_text = []
-
-#         for page_num, page in enumerate(reader.pages):
-#             try:
-#                 text = page.extract_text()  # PyPDF2 extraction
-#                 if text:
-#                     # Clean & preserve formatting
-#                     text = text.replace("\u00A0", " ").strip()
-#                     extracted_text.append(f"--- Page {page_num + 1} ---\n{text}\n")
-#                 else:
-#                     extracted_text.append(f"--- Page {page_num + 1}: (No extractable text found) ---\n")
-#             except Exception as e:
-#                 extracted_text.append(f"--- Page {page_num + 1}: Error extracting text: {str(e)} ---\n")
-
-#         return "\n".join(extracted_text).strip()
-
-#     except Exception as e:
-#         return f"[ERROR] Unable to read PDF file: {str(e)}"
+async def scrape_pdf(file: UploadFile) -> str:
+    binary_data = await file.read()
+    try:
+        pdf_buffer = BytesIO(binary_data)
+        reader = PdfReader(pdf_buffer)
+        texts = []
+        for page in reader.pages:
+            page_text = page.extract_text()
+            if page_text:
+                texts.append(page_text.strip())
+        return "\n\n".join(texts)
+    except Exception as e:
+        # Handle cases where PyPDF2 might fail
+        raise HTTPException(status_code=500, detail=f"Error processing PDF file: {e}")
 
 
-def scrape_doc(file: UploadFile) -> str:
-    doc = Document(file.file)
+async def scrape_doc(file: UploadFile) -> str:
+    binary_data = await file.read()
+    try:
+        doc_buffer = BytesIO(binary_data)
+        doc = Document(doc_buffer)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing DOC/DOCX file: {e}")
     text = ""
     for para in doc.paragraphs:
         text += para.text
@@ -85,7 +69,7 @@ async def upload_and_analysis(file):
         ".doc"
     ):
         file_type = "docx"
-        data = scrape_doc(file)
+        data = await scrape_doc(file)
 
     if not data:
         raise HTTPException(status_code=400, detail="unable to scrape the data")
