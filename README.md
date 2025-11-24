@@ -78,6 +78,14 @@ Follow these instructions to get the project up and running on your local machin
 
 ## API Usage
 
+### Interactive API Docs (Swagger UI)
+Once the server is running, you can access the interactive API documentation by navigating to `http://127.0.0.1:8000/docs` in your web browser.
+
+This Swagger UI allows you to:
+*   View all available API endpoints.
+*   See the expected request and response models.
+*   Test the endpoints directly from your browser.
+
 ### Upload and Analyze a Resume
 
 *   **Endpoint:** `POST /upload`
