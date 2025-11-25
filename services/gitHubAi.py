@@ -1,16 +1,13 @@
-import os
+from config.settings import Github_Access_Token, GITHUB_HOSTNAME
 from github import Github, Auth, GithubException
 
 async def fetchGitHubIformation(userName: str) -> dict:
     try:
-        accessToken = os.getenv('Github_Access_Token')
-        # using an access token
+        accessToken = Github_Access_Token
         auth = Auth.Token(accessToken)
 
-        hostname = os.getenv('GITHUB_HOSTNAME')  # Custom GitHub Enterprise hostname
-
-        if hostname:
-            base_url = f"https://{hostname}/api/v3"
+        if GITHUB_HOSTNAME:
+            base_url = f"https://{GITHUB_HOSTNAME}/api/v3"
             g = Github(base_url=base_url, auth=auth)
         else:
             # Public Web Github
@@ -32,12 +29,38 @@ async def fetchGitHubIformation(userName: str) -> dict:
             "html_url": user.html_url
         }
 
-        # Close connection after use
+        # Fetch repositories + commits
+        repos_data = []
+
+        repos = user.get_repos()
+
+        for repo in repos:
+            repo_info = {
+                "name": repo.name,
+                "html_url": repo.html_url,
+                "commits": []
+            }
+
+            try:
+                commits = repo.get_commits()
+                # Fetch only first N commit messages
+                for i, commit in enumerate(commits):
+                    repo_info["commits"].append({
+                        "message": commit.commit.message,
+                    })
+            except Exception:
+                # e.g. empty repo or no permission
+                repo_info["commits"] = []
+
+            repos_data.append(repo_info)
+
+        # Close session
         g.close()
 
-        print("user_info", user_info)
-
-        return user_info
+        return {
+            "user_info": user_info,
+            "repositories": repos_data
+        }
 
     except GithubException as e:
         # Handle error, e.g., user not found or auth error
