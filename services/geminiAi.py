@@ -52,3 +52,9 @@ async def analyze_resume(text: str) -> str:
         response_text = response_text[7:-3].strip()  # Remove ```json and ```
 
     return response_text
+
+
+async def analyze_github(text: str) -> str:
+    print("Initializing analysis...Waiting for response...")
+
+    return True
