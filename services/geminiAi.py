@@ -11,7 +11,7 @@ def setup_gemini():
 
 
 async def analyze_resume(text: str) -> str:
-    print("Initializing analysis...Waiting for response...")
+    print("Initializing resume analysis...Waiting for response...")
 
     model = setup_gemini()
 
@@ -45,7 +45,7 @@ async def analyze_resume(text: str) -> str:
     """
 
     response = model.generate_content(prompt)
-    print(f"\nAnalysis completed!!")
+    print(f"\nResume Analysis completed!!")
 
     response_text = response.text.strip()
     if response_text.startswith("```json") and response_text.endswith("```"):

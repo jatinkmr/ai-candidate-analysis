@@ -87,13 +87,10 @@ async def upload_and_analysis(file, githubUserName: str):
     print(f"Data scrapped successfully from {file.filename}. Going for analysis...")
 
     try:
-        github_info, analysis_json_str = await asyncio.gather(fetchGitHubIformation(githubUserName), analyze_resume(data))
-
-        # Await GitHub information fetching
-        # github_info = await fetchGitHubIformation(githubUserName)
-
-        # Get resume analysis JSON string
-        # analysis_json_str = analyze_resume(data)
+        github_info, analysis_json_str = await asyncio.gather(
+            fetchGitHubIformation(githubUserName),
+            analyze_resume(data)
+        )
 
         # Convert JSON string to dict
         analysis_dict = json.loads(analysis_json_str)

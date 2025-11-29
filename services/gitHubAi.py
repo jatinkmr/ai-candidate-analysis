@@ -2,20 +2,23 @@ from config.settings import Github_Access_Token, GITHUB_HOSTNAME
 from github import Github, Auth, GithubException
 
 async def fetchGitHubIformation(userName: str) -> dict:
+    print("Initializing github analysis...Waiting for response...")
     try:
         accessToken = Github_Access_Token
         auth = Auth.Token(accessToken)
-
         if GITHUB_HOSTNAME:
             base_url = f"https://{GITHUB_HOSTNAME}/api/v3"
             g = Github(base_url=base_url, auth=auth)
         else:
             # Public Web Github
             g = Github(auth=auth)
-
+        
         # Fetch the user by provided userName
         user = g.get_user(userName)
-
+        
+        # Get the earliest commit date across all repos to determine active since
+        earliest_commit_date = None
+        
         user_info = {
             "login": user.login,
             "name": user.name,
@@ -28,34 +31,63 @@ async def fetchGitHubIformation(userName: str) -> dict:
             "updated_at": user.updated_at.isoformat() if user.updated_at else None,
             "html_url": user.html_url
         }
-
+        
         # Fetch repositories + commits
         repos_data = []
-
-        repos = user.get_repos()
-
+        total_commits = 0
+        repos = list(user.get_repos())
+        
         for repo in repos:
             repo_info = {
                 "name": repo.name,
                 "html_url": repo.html_url,
                 "commits": []
             }
-
             try:
+                # Get all commits
                 commits = repo.get_commits()
-                # Fetch only first N commit messages
-                for i, commit in enumerate(commits):
+                
+                # Iterate through ALL commits
+                for commit in commits:
+                    commit_date = commit.commit.author.date if commit.commit.author and commit.commit.author.date else None
+                    
                     repo_info["commits"].append({
                         "message": commit.commit.message,
+                        "date": commit_date.isoformat() if commit_date else None
                     })
-            except Exception:
-                # e.g. empty repo or no permission
+                    
+                    # Track the earliest commit date
+                    if commit_date:
+                        if earliest_commit_date is None or commit_date < earliest_commit_date:
+                            earliest_commit_date = commit_date
+                
+                # Count commits for this repo
+                total_commits += len(repo_info["commits"])
+                
+            except GithubException as e:
+                # e.g. empty repo, no permission, or repo is empty
                 repo_info["commits"] = []
-
+                repo_info["error"] = str(e)
+            except Exception as e:
+                repo_info["commits"] = []
+                repo_info["error"] = str(e)
+            
             repos_data.append(repo_info)
+        
+        # Determine active since date - use the earlier of account creation or first commit
+        active_since = user.created_at
+        if earliest_commit_date and earliest_commit_date < user.created_at:
+            active_since = earliest_commit_date
+        
+        user_info["active_since"] = active_since.isoformat() if active_since else None
 
         # Close session
         g.close()
+        print('GitHub session closed.')
+        print('Analysis completed!!')
+        
+        user_info["total_commits"] = total_commits
+        user_info["total_repos"] = len(repos)
 
         return {
             "user_info": user_info,
