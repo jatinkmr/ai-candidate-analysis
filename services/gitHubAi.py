@@ -21,11 +21,11 @@ async def fetchGitHubIformation(userName: str) -> dict:
         earliest_commit_date = None
 
         user_info = {
-            "login": user.login,
+            "username": user.login,
             "name": user.name,
             "bio": user.bio,
             "location": user.location,
-            "public_repos": user.public_repos,
+            "total_public_repos": user.public_repos,
             "followers": user.followers,
             "following": user.following,
             "created_at": user.created_at.isoformat() if user.created_at else None,
