@@ -54,7 +54,38 @@ async def analyze_resume(text: str) -> str:
     return response_text
 
 
-async def analyze_github(text: str) -> str:
-    print("Initializing analysis...Waiting for response...")
+async def analyze_github(data: dict) -> str:
+    print("Initializing analyze_github GitHub analysis...Waiting for response...")
 
-    return True
+    model = setup_gemini()
+
+    prompt = f"""
+    Think like you are an expert GitHub profile analyzer. You will be provided with GitHub user data including user information and repositories with commits.
+    Your task is to analyze this data and return a well-structured JSON object that summarizes the candidate's GitHub activity, inferred skills, activity level, and other insights.
+    Input: {data}
+    Output: Return only a JSON object with the following structure (fields may be null or empty if information is not available): {{
+    "summary": "",
+    "skills_inferred": [],
+    "activity_level": "",
+    "top_repositories": [
+        {{
+            "name": "",
+            "description": "",
+            "commits_count": 0,
+            "last_commit_date": ""
+        }}
+    ],
+    "commit_patterns": "",
+    "languages_used": [],
+    "overall_rating": ""
+    }}
+    """
+
+    response = model.generate_content(prompt)
+    print(f"\nGitHub Analysis completed!!")
+
+    response_text = response.text.strip()
+    if response_text.startswith("```json") and response_text.endswith("```"):
+        response_text = response_text[7:-3].strip()  # Remove ```json and ```
+
+    return response_text
