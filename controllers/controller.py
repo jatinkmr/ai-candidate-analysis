@@ -4,13 +4,15 @@ from services.service import get_welcome_message, upload_and_analysis
 
 router = APIRouter()
 
+
 @router.get("/")
 def home():
     return Response(
         status_code=status.HTTP_200_OK,
-        content=json.dumps({ "message": get_welcome_message() }),
+        content=json.dumps({"message": get_welcome_message()}),
         media_type="application/json",
     )
+
 
 @router.post("/analyze")
 async def upload_file(file: UploadFile = File(...), githubUserName: str = Form(...)):
@@ -25,7 +27,7 @@ async def upload_file(file: UploadFile = File(...), githubUserName: str = Form(.
         content=json.dumps(
             {
                 "message": f"File '{file.filename}' uploaded, scraped & analysis successfully.",
-                "response": response_json
+                "response": response_json,
             }
         ),
         media_type="application/json",
