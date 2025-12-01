@@ -1,5 +1,6 @@
 from config.settings import GOOGLE_API_KEY
 import google.generativeai as genai
+import asyncio
 
 
 def setup_gemini():
@@ -10,7 +11,8 @@ def setup_gemini():
     return genai.GenerativeModel("gemini-2.5-flash")
 
 
-async def analyze_resume(text: str) -> str:
+def _analyze_resume_sync(text: str) -> str:
+    """Blocking resume analysis function to run in thread pool."""
     print("Initializing resume analysis...Waiting for response...")
 
     model = setup_gemini()
@@ -54,7 +56,13 @@ async def analyze_resume(text: str) -> str:
     return response_text
 
 
-async def analyze_github(data: dict) -> str:
+async def analyze_resume(text: str) -> str:
+    """Async wrapper that runs blocking Gemini call in thread pool."""
+    return await asyncio.to_thread(_analyze_resume_sync, text)
+
+
+def _analyze_github_sync(data: dict) -> str:
+    """Blocking GitHub analysis function to run in thread pool."""
     print("Initializing analyze_github GitHub analysis...Waiting for response...")
 
     model = setup_gemini()
@@ -83,6 +91,17 @@ async def analyze_github(data: dict) -> str:
 
     response = model.generate_content(prompt)
     print(f"\nGitHub Analysis completed!!")
+
+    response_text = response.text.strip()
+    if response_text.startswith("```json") and response_text.endswith("```"):
+        response_text = response_text[7:-3].strip()  # Remove ```json and ```
+
+    return response_text
+
+
+async def analyze_github(data: dict) -> str:
+    """Async wrapper that runs blocking Gemini call in thread pool."""
+    return await asyncio.to_thread(_analyze_github_sync, data)
 
     response_text = response.text.strip()
     if response_text.startswith("```json") and response_text.endswith("```"):

@@ -1,8 +1,10 @@
 from config.settings import Github_Access_Token, GITHUB_HOSTNAME
 from github import Github, Auth, GithubException
+import asyncio
 
 
-async def fetchGitHubIformation(userName: str) -> dict:
+def _fetchGitHubIformation_sync(userName: str) -> dict:
+    """Blocking GitHub API calls to run in thread pool."""
     print("Initializing github analysis...Waiting for response...")
     try:
         accessToken = Github_Access_Token
@@ -105,3 +107,8 @@ async def fetchGitHubIformation(userName: str) -> dict:
     except Exception as e:
         # General error handling
         raise Exception(f"Failed to fetch GitHub information: {str(e)}")
+
+
+async def fetchGitHubIformation(userName: str) -> dict:
+    """Async wrapper that runs blocking PyGithub calls in thread pool."""
+    return await asyncio.to_thread(_fetchGitHubIformation_sync, userName)
