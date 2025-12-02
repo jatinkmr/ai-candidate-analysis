@@ -124,7 +124,3 @@ curl -X POST "http://127.0.0.1:8000/analyze" \
      -F "file=@/path/to/your/resume.pdf" \
      -F "githubUserName=octocat"
 ```
-
-You will receive a JSON response containing the parsed information from the resume, an analysis of the GitHub profile, and a final consolidated analysis.
-
-```
