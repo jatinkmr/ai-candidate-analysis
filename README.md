@@ -91,7 +91,7 @@ Follow these instructions to get the project up and running on your local machin
     With the virtual environment activated, run the following command from the project's root directory:
 
     ```bash
-    uvicorn main:app --reload
+    python main.py
     ```
 
 2.  **Access the API:**
