@@ -1,4 +1,5 @@
 import json
+import asyncio
 
 from fastapi import HTTPException, UploadFile
 from PyPDF2 import PdfReader
@@ -67,14 +68,25 @@ async def scrape_doc(file: UploadFile) -> str:
 async def upload_and_analysis(file, githubUserName: str):
     print("Receiving File...")
     validate_file(file)
+
+    # Determine file type and create extraction task
     if file.filename.lower().endswith(".pdf"):
         file_type = "pdf"
-        data = await scrape_pdf(file)
+        extract_task = scrape_pdf(file)
     elif file.filename.lower().endswith(".docx") or file.filename.lower().endswith(
         ".doc"
     ):
         file_type = "docx"
-        data = await scrape_doc(file)
+        extract_task = scrape_doc(file)
+    else:
+        raise HTTPException(status_code=400, detail="Unsupported file type")
+
+    print(f"Starting parallel processing: resume extraction and GitHub fetch...")
+
+    # Run resume extraction and GitHub fetch in parallel
+    data, github_info = await asyncio.gather(
+        extract_task, fetchGitHubIformation(githubUserName)
+    )
 
     if not data:
         raise HTTPException(status_code=400, detail="unable to scrape the data")
@@ -90,14 +102,28 @@ async def upload_and_analysis(file, githubUserName: str):
     print(f"Data scrapped successfully from {file.filename}. Going for analysis...")
 
     try:
-        github_info = await fetchGitHubIformation(githubUserName)
-
         githubAnalysis = await analyze_github(github_info)
-        github_analysis_info = json.loads(githubAnalysis)
+
+        try:
+            github_analysis_info = json.loads(githubAnalysis)
+        except json.JSONDecodeError as e:
+            print(f"Error parsing GitHub analysis JSON: {e}")
+            print(f"GitHub analysis response: {githubAnalysis[:500]}...")
+            raise HTTPException(
+                status_code=500, detail=f"Failed to parse GitHub analysis: {str(e)}"
+            )
 
         # Final Analysis with raw resume text
         final_analysis_data = await final_analysis(data, github_analysis_info)
-        final_analysis_info = json.loads(final_analysis_data)
+
+        try:
+            final_analysis_info = json.loads(final_analysis_data)
+        except json.JSONDecodeError as e:
+            print(f"Error parsing final analysis JSON: {e}")
+            print(f"Final analysis response: {final_analysis_data[:500]}...")
+            raise HTTPException(
+                status_code=500, detail=f"Failed to parse final analysis: {str(e)}"
+            )
 
         # Combine GitHub info and analysis
         combined_result = {
@@ -108,6 +134,8 @@ async def upload_and_analysis(file, githubUserName: str):
         # Return combined dict
         return combined_result
 
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"An error occurred during analysis: {e}")
         raise HTTPException(
