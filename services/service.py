@@ -112,8 +112,8 @@ async def upload_and_analysis(file, githubUserName: str):
             "github_analysis_info": github_analysis_info,
             "final_analysis_info": final_analysis_info,
         }
-        # Return combined dict as JSON string
-        return json.dumps(combined_result)
+        # Return combined dict
+        return combined_result
 
     except Exception as e:
         print(f"An error occurred during analysis: {e}")

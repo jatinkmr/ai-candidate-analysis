@@ -103,12 +103,6 @@ async def analyze_github(data: dict) -> str:
     """Async wrapper that runs blocking Gemini call in thread pool."""
     return await asyncio.to_thread(_analyze_github_sync, data)
 
-    response_text = response.text.strip()
-    if response_text.startswith("```json") and response_text.endswith("```"):
-        response_text = response_text[7:-3].strip()  # Remove ```json and ```
-
-    return response_text
-
 
 async def final_analysis(resume_analysis: dict, github_analysis: dict) -> str:
     """Async wrapper that runs blocking Gemini call in thread pool."""

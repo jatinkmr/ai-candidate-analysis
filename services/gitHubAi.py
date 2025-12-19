@@ -9,6 +9,7 @@ def _fetchGitHubIformation_sync(userName: str) -> dict:
     try:
         accessToken = Github_Access_Token
         auth = Auth.Token(accessToken)
+        # Enterprise GitHub
         if GITHUB_HOSTNAME:
             base_url = f"https://{GITHUB_HOSTNAME}/api/v3"
             g = Github(base_url=base_url, auth=auth)
