@@ -1,12 +1,11 @@
 import json
-import asyncio
 
 from fastapi import HTTPException, UploadFile
 from PyPDF2 import PdfReader
 from docx import Document
 from io import BytesIO
 
-from services.geminiAi import analyze_github, analyze_resume, final_analysis
+from services.geminiAi import analyze_github, final_analysis
 from services.gitHubAi import fetchGitHubIformation
 
 
@@ -91,23 +90,17 @@ async def upload_and_analysis(file, githubUserName: str):
     print(f"Data scrapped successfully from {file.filename}. Going for analysis...")
 
     try:
-        github_info, analysis_json_str = await asyncio.gather(
-            fetchGitHubIformation(githubUserName), analyze_resume(data)
-        )
-
-        # Convert JSON string to dict
-        analysis_dict = json.loads(analysis_json_str)
+        github_info = await fetchGitHubIformation(githubUserName)
 
         githubAnalysis = await analyze_github(github_info)
         github_analysis_info = json.loads(githubAnalysis)
 
-        # Final Analysis
-        final_analysis_data = await final_analysis(analysis_dict, github_analysis_info)
+        # Final Analysis with raw resume text
+        final_analysis_data = await final_analysis(data, github_analysis_info)
         final_analysis_info = json.loads(final_analysis_data)
 
-        # Combine GitHub info and analysis dict
+        # Combine GitHub info and analysis
         combined_result = {
-            "resume_analysis": analysis_dict,
             "github_user_info": github_info,
             "github_analysis_info": github_analysis_info,
             "final_analysis_info": final_analysis_info,

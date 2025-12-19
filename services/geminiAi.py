@@ -104,23 +104,25 @@ async def analyze_github(data: dict) -> str:
     return await asyncio.to_thread(_analyze_github_sync, data)
 
 
-async def final_analysis(resume_analysis: dict, github_analysis: dict) -> str:
+async def final_analysis(resume_text: str, github_analysis: dict) -> str:
     """Async wrapper that runs blocking Gemini call in thread pool."""
-    return await asyncio.to_thread(
-        _final_analysis_sync, resume_analysis, github_analysis
-    )
+    return await asyncio.to_thread(_final_analysis_sync, resume_text, github_analysis)
 
 
-def _final_analysis_sync(resume_analysis: dict, github_analysis: dict) -> str:
+def _final_analysis_sync(resume_text: str, github_analysis: dict) -> str:
     """Blocking final analysis function to run in thread pool."""
     print("Initializing final analysis...Waiting for response...")
 
     model = setup_gemini()
 
     prompt = f"""
-    Think like you are an expert final analysis. You will be provided with resume analysis and github analysis.
+    Think like you are an expert candidate analyzer. You will be provided with raw resume text and github analysis.
     Your task is to analyze this data and return a well-structured JSON object that summarizes the candidate's profile.
-    Input: Resume Analysis: {resume_analysis} Github Analysis: {github_analysis}
+    
+    Input: 
+    Resume Text: {resume_text} 
+    Github Analysis: {github_analysis}
+    
     Output: Return only a JSON object with the following structure (fields may be null or empty if information is not available): {{
       "timestamp": "",
       "overall_credibility_score": 0,
@@ -131,9 +133,11 @@ def _final_analysis_sync(resume_analysis: dict, github_analysis: dict) -> str:
         "experience_consistency_score": 0
       }},
       "resume_summary": {{
+        "name": "",
         "claimed_skills": [],
         "projects_mentioned": 0,
-        "experience_years": 0
+        "experience_years": 0,
+        "education": []
       }},
       "github_summary": {{
         "total_repositories": 0,
@@ -148,7 +152,7 @@ def _final_analysis_sync(resume_analysis: dict, github_analysis: dict) -> str:
       "detailed_analysis": "",
       "recommendations": []
     }}
-    Note: Provide a comprehensive analysis based on the inputs. Generate the timestamp as the current UTC time in ISO format (e.g., "2023-10-01T12:00:00Z").
+    Note: Provide a comprehensive analysis based on the inputs. Parse the resume text to extract candidate information. Generate the timestamp as the current UTC time in ISO format (e.g., "2023-10-01T12:00:00Z").
     """
 
     response = model.generate_content(prompt)
