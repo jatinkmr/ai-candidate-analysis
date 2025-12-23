@@ -1,5 +1,6 @@
 import json
 from fastapi import APIRouter, status, Response, UploadFile, File, Form
+from typing import Optional
 from services.service import get_welcome_message, upload_and_analysis
 
 router = APIRouter()
@@ -15,7 +16,7 @@ def home():
 
 
 @router.post("/analyze")
-async def upload_file(file: UploadFile = File(...), githubUserName: str = Form(...)):
+async def upload_file(file: UploadFile = File(...), githubUserName: Optional[str] = Form(None)):
     response_data = await upload_and_analysis(file, githubUserName)
 
     return Response(

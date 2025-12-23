@@ -91,6 +91,11 @@ async def upload_and_analysis(file, githubUserName: str):
     print(f"Data scrapped successfully from {file.filename}. Going for analysis...")
 
     try:
+        if not githubUserName:
+            raise HTTPException(
+            status_code=400,
+            detail="Github username is required for this analysis")
+        
         github_info, analysis_json_str = await asyncio.gather(
             fetchGitHubIformation(githubUserName), analyze_resume(data)
         )
@@ -111,7 +116,10 @@ async def upload_and_analysis(file, githubUserName: str):
         }
         # Return combined dict
         return combined_result
-
+    
+    except HTTPException as e:
+        # Preserve original status code & message
+        raise e
     except Exception as e:
         print(f"An error occurred during analysis: {e}")
         raise HTTPException(
