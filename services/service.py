@@ -6,7 +6,7 @@ from PyPDF2 import PdfReader
 from docx import Document
 from io import BytesIO
 
-from services.geminiAi import analyze_github, analyze_resume, final_analysis
+from services.geminiAi import analyze_resume, final_analysis
 from services.gitHubAi import fetchGitHubIformation
 
 
@@ -98,19 +98,16 @@ async def upload_and_analysis(file, githubUserName: str):
         # Convert JSON string to dict
         analysis_dict = json.loads(analysis_json_str)
 
-        githubAnalysis = await analyze_github(github_info)
-        github_analysis_info = json.loads(githubAnalysis)
-
         # Final Analysis
-        final_analysis_data = await final_analysis(analysis_dict, github_analysis_info)
-        final_analysis_info = json.loads(final_analysis_data)
+        final_analysis_data = await final_analysis(analysis_dict, github_info)
+        final_analysis_info  = json.loads(final_analysis_data)
 
         # Combine GitHub info and analysis dict
         combined_result = {
             "resume_analysis": analysis_dict,
             "github_user_info": github_info,
-            "github_analysis_info": github_analysis_info,
-            "final_analysis_info": final_analysis_info,
+            "github_analysis_info": final_analysis_info["github_analysis"],
+            "final_analysis_info": final_analysis_info["final_analysis"],
         }
         # Return combined dict
         return combined_result
