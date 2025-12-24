@@ -42,7 +42,8 @@ def _analyze_resume_sync(text: str) -> str:
         ],
         "skills": [],
         "certifications": [],
-        "projects": []
+        "projects": [],
+        "github_username": "",
         }}
     """
 

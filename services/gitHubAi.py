@@ -1,3 +1,4 @@
+from fastapi import HTTPException
 from config.settings import Github_Access_Token, GITHUB_HOSTNAME
 from github import Github, Auth, GithubException
 import asyncio
@@ -101,10 +102,46 @@ def _fetchGitHubIformation_sync(userName: str) -> dict:
         return {"user_info": user_info, "repositories": repos_data}
 
     except GithubException as e:
-        # Handle error, e.g., user not found or auth error
-        error_message = f"GitHub API Error: {str(e)}"
-        raise Exception(error_message)
+        status = e.status or 500
 
+        # Safely extract message
+        github_message = None
+        if isinstance(e.data, dict):
+            github_message = e.data.get("message")
+
+        # Explicit mappings
+        if status == 404:
+            raise HTTPException(
+                status_code=404,
+                detail="GitHub user not found"
+            )
+
+        if status == 401:
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid GitHub credentials"
+            )
+
+        if status == 403:
+            # Most common cause: rate limit
+            raise HTTPException(
+                status_code=429,
+                detail="GitHub rate limit exceeded"
+            )
+
+        # Other 4xx errors
+        if 400 <= status < 500:
+            raise HTTPException(
+                status_code=status,
+                detail=github_message or "Invalid GitHub request"
+            )
+
+        # GitHub 5xx → Bad Gateway
+        raise HTTPException(
+            status_code=502,
+            detail="GitHub service unavailable"
+        )
+    
     except Exception as e:
         # General error handling
         raise Exception(f"Failed to fetch GitHub information: {str(e)}")

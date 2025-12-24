@@ -65,7 +65,7 @@ async def scrape_doc(file: UploadFile) -> str:
     return text
 
 
-async def upload_and_analysis(file, githubUserName: str):
+async def upload_and_analysis(file, github_username: str):
     print("Receiving File...")
     validate_file(file)
     if file.filename.lower().endswith(".pdf"):
@@ -81,7 +81,7 @@ async def upload_and_analysis(file, githubUserName: str):
         raise HTTPException(status_code=400, detail="unable to scrape the data")
 
     print(
-        f"{file_type} file recv successfully and the github username is: {githubUserName}"
+        f"{file_type} file recv successfully and the github username is: {github_username}"
     )
 
     words = data.split()
@@ -91,17 +91,19 @@ async def upload_and_analysis(file, githubUserName: str):
     print(f"Data scrapped successfully from {file.filename}. Going for analysis...")
 
     try:
-        if not githubUserName:
+        analysis_json_str = await analyze_resume(data)
+        # Convert JSON string to dict
+        analysis_dict = json.loads(analysis_json_str)
+
+        if not github_username:
+            github_username = analysis_dict.get("github_username")
+
+        if not github_username:
             raise HTTPException(
             status_code=400,
             detail="Github username is required for this analysis")
-        
-        github_info, analysis_json_str = await asyncio.gather(
-            fetchGitHubIformation(githubUserName), analyze_resume(data)
-        )
-
-        # Convert JSON string to dict
-        analysis_dict = json.loads(analysis_json_str)
+       
+        github_info = await fetchGitHubIformation(github_username)
 
         # Final Analysis
         final_analysis_data = await final_analysis(analysis_dict, github_info)
